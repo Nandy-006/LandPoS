@@ -1,6 +1,6 @@
 from blockchain.block import Block
 from blockchain.transaction import Transaction
-from utils import Log
+from utils.utils import Log
 
 class Blockchain:
     def __init__(self) -> None:

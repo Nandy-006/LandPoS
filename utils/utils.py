@@ -1,6 +1,6 @@
 import uuid
+from simple_chalk import blue, red
 
-LOCALHOST_ADDRESS = "127.0.0.1"
 class Command:
     def __init__(self, key: str, help: str) -> None:
         self.key = key
@@ -12,11 +12,11 @@ class Command:
 class Log:
     @staticmethod
     def info(message: str) -> None:
-        print(f"INFO: {message}")
+        print(f"{blue.bold('INFO')}: {message}")
     
     @staticmethod
     def error(message: str) -> None:
-        print(f"ERROR: {message}")
+        print(f"{red.bold('ERROR')}: {message}")
 
 def id() -> str:
     return str(uuid.uuid4())
