@@ -1,4 +1,3 @@
-
 from blockchain.blockchain import Blockchain
 from network.network import Network
 from utils.utils import Log
