@@ -1,7 +1,7 @@
 import typing
 import pickle
 from datetime import datetime
-from utils import Log, id
+from utils.utils import Log, id
 
 class Transaction:
     LD_TRANSACTION = 'Land Declaration'

@@ -1,12 +1,12 @@
 from blockchain.blockchain import Blockchain
 from blockchain.transaction import Transaction
 from blockchain.constants import BLOCK_TRANSACTION_THRESHOLD
-from utils import Log
+from utils.utils import Log
 from network.node import Node
 
 class Network:
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.nodes = {}
         self.lands = {}
         self.transactionPool = []
