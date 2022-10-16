@@ -1,10 +1,10 @@
+import random
 from blockchain.block import Block
 from blockchain.blockchain import Blockchain
 from blockchain.transaction import Transaction
 from blockchain.constants import BLOCK_TRANSACTION_THRESHOLD
 from utils.utils import Log
 from network.node import Node
-import random
 
 class Network:
 
@@ -21,15 +21,16 @@ class Network:
         
         newNode = Node(id, balance)
         self.nodes[id] = newNode
+        Log.info(f"Node with ID {id} has joined the network", "New Node")
         return newNode
     
-    def getValidator(self):
-        validator = random.choices(
-            self.nodes.items(),
-            [node.stake * node.age for node in self.nodes.items()],
+    def getValidator(self) -> Node:
+        validators = random.choices(
+            list(self.nodes.values()),
+            [node.stake * node.age + 1 for node in list(self.nodes.values())],
             k = 1
-        )[0]
-        return validator
+        )
+        return validators[0]
     
     def broadcastTransaction(self, transaction: Transaction) -> None:
         self.transactionPool.append(transaction)
@@ -68,19 +69,23 @@ class Network:
 
     def registerLand(self, node: Node, land: str) -> None:
         transaction = Transaction.newLDTransaction(node.id, land)
+        Log.info(f"{node.id} owns land {land}", "New Transaction")
         self.broadcastTransaction(transaction)
 
     def stake(self, node: Node, amount: int) -> None:
         transaction = Transaction.newSTTransaction(node.id, amount)
+        Log.info(f"{node.id} staked {amount} coins", "New Transaction")
         self.broadcastTransaction(transaction)
     
     def buy(self, buyer: Node, land: str) -> None:
         seller = self.lands[land]
         transaction = Transaction.newLTTransaction(seller.id, land, buyer.id)
+        Log.info(f"{buyer.id} buys land {land} from {seller.id}", "New Transaction")
         self.broadcastTransaction(transaction)
 
     def sell(self, seller: Node, buyer: Node, land: str) -> None:
         transaction = Transaction.newLTTransaction(seller.id, land, buyer.id)
+        Log.info(f"{seller.id} sells land {land} to {buyer.id}", "New Transaction")
         self.broadcastTransaction(transaction)
 
     def getLandHistory(self, land: str) -> None:
@@ -88,5 +93,6 @@ class Network:
         if len(history) == 0:
                 Log.error("Unknown Land ID")
                 return None
+        Log.info(f"Transactions associated with land {land}", "Land History")
         for transaction in history:
             print(f"- {transaction.timestamp}: {transaction.input['user_id']}")    
