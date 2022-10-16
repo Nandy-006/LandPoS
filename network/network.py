@@ -1,3 +1,4 @@
+from blockchain.block import Block
 from blockchain.blockchain import Blockchain
 from blockchain.transaction import Transaction
 from blockchain.constants import BLOCK_TRANSACTION_THRESHOLD
@@ -12,7 +13,7 @@ class Network:
         self.transactionPool = []
         self.blockchain = Blockchain()
     
-    def registerNode(self, id, balance):
+    def registerNode(self, id: str, balance: int) -> None:
         if id in self.nodes:
             Log.error("Node already exists")
             return None
@@ -21,14 +22,14 @@ class Network:
         self.nodes[id] = newNode
         return newNode
     
-    def getValidator(self):
+    def getValidator(self) -> Node:
         validators = []
         for _, node in self.nodes.items():
             validators.append((node.stake * node.age, node.id))
         validators.sort(reverse=True)
         return self.nodes[validators[0][1]]
     
-    def broadcastTransaction(self, transaction):
+    def broadcastTransaction(self, transaction: Transaction) -> None:
         self.transactionPool.append(transaction)
         if len(self.transactionPool) >= BLOCK_TRANSACTION_THRESHOLD:
             validator = self.getValidator()
@@ -38,7 +39,7 @@ class Network:
                 return
             self.addBlock(block)
     
-    def addBlock(self, block):
+    def addBlock(self, block: Block) -> None:
         if self.blockchain.addBlock(block) is None:
             Log.error(f"Invalid block\n {block}")
             return
@@ -63,24 +64,24 @@ class Network:
         
         self.transactionPool = []
 
-    def registerLand(self, node, land):
+    def registerLand(self, node: Node, land: str) -> None:
         transaction = Transaction.newLDTransaction(node.id, land)
         self.broadcastTransaction(transaction)
 
-    def stake(self, node, amount):
+    def stake(self, node: Node, amount: int) -> None:
         transaction = Transaction.newSTTransaction(node.id, amount)
         self.broadcastTransaction(transaction)
     
-    def buy(self, buyer, land):
+    def buy(self, buyer: Node, land: str) -> None:
         seller = self.lands[land]
         transaction = Transaction.newLTTransaction(seller.id, land, buyer.id)
         self.broadcastTransaction(transaction)
 
-    def sell(self, seller, buyer, land):
+    def sell(self, seller: Node, buyer: Node, land: str) -> None:
         transaction = Transaction.newLTTransaction(seller.id, land, buyer.id)
         self.broadcastTransaction(transaction)
 
-    def getLandHistory(self, land):
+    def getLandHistory(self, land: str) -> None:
         history = self.blockchain.getLandHistory(land)
         if len(history) == 0:
                 Log.error("Unknown Land ID")

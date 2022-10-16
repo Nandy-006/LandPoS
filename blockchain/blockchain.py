@@ -51,7 +51,7 @@ class Blockchain:
     def getLastBlock(self) -> Block:
         return self.chain[-1]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "\n\n".join(["BLOCKCHAIN"] + [
             str(block) for block in self.chain
         ])
