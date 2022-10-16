@@ -1,16 +1,17 @@
 from blockchain.block import Block
+from blockchain.blockchain import Blockchain
 from blockchain.transaction import Transaction
 from utils.utils import Log
 
 class Node:
 
-    def __init__(self, id, balance):
+    def __init__(self, id: str, balance: int) -> None:
         self.id = id
         self.balance = balance
         self.stake = 0
-        self.age = 0
+        self.age = 1
     
-    def mint(self, transactionPool, lands, nodes, blockchain):
+    def mint(self, transactionPool: list[Transaction], lands: dict, nodes: dict, blockchain: Blockchain) -> Block | None:
         blockTransactions = []
         for transaction in transactionPool:
             isValid = self.validate(transaction, lands, nodes)
@@ -23,7 +24,7 @@ class Node:
             return None
         return Block.createBlock(blockchain.getLastBlock(), self.id, blockTransactions)
 
-    def validate(self, transaction, lands, nodes):
+    def validate(self, transaction: Transaction, lands: dict, nodes: dict) -> bool:
         if transaction.type == Transaction.LD_TRANSACTION:
             if transaction.input["land_id"] in lands:
                 Log.error(f"<{transaction}> is invalid as land is already registered")

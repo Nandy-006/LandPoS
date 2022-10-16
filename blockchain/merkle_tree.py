@@ -9,7 +9,6 @@ class MerkleTree:
             nextHashList = []
             if len(hashList) % 2 == 1:
                 hashList.append(hashList[-1])
-            print(hashList)
             for i in range(0, len(hashList), 2):
                 nextHashList.append(sha256(str(hashList[i] + hashList[i + 1]).encode('utf-8')).hexdigest())
             hashList = nextHashList

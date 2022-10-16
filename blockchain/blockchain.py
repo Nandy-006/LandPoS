@@ -9,7 +9,7 @@ class Blockchain:
     def addBlock(self, block: Block) -> Block | None:
         if block.previousBlockHash == Block.hashBlock(self.getLastBlock()):
             self.chain.append(block)
-            print("Added new block")
+            Log.info("", "New Block minted")
             print(block)
         else:
             Log.error("Invalid block")
@@ -51,7 +51,7 @@ class Blockchain:
     def getLastBlock(self) -> Block:
         return self.chain[-1]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "\n\n".join(["BLOCKCHAIN"] + [
             str(block) for block in self.chain
         ])

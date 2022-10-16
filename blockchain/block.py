@@ -57,4 +57,6 @@ class Block:
             f"BLOCK DATA",
         ] + [
             str(transaction) for transaction in self.data
+        ] + [
+            "\n"
         ])

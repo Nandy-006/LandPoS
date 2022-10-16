@@ -1,14 +1,13 @@
-import typing
 import pickle
 from datetime import datetime
-from utils.utils import Log, id
+from utils.utils import id
 
 class Transaction:
     LD_TRANSACTION = 'Land Declaration'
     LT_TRANSACTION = 'Land Transfer'
     ST_TRANSACTION = 'Stake Increase'
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.id = id()
         self.type = ""
         self.timestamp = datetime.now()
