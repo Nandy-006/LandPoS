@@ -1,7 +1,17 @@
 import pickle
 from datetime import datetime
+from termcolor import colored
+from typing import TypedDict
+
 from utils.utils import id
 
+class InputType(TypedDict):
+    user_id: str
+    land_id: str
+    amount: int
+
+class OutputType(TypedDict):
+    user_id: str
 class Transaction:
     LD_TRANSACTION = 'Land Declaration'
     LT_TRANSACTION = 'Land Transfer'
@@ -11,47 +21,47 @@ class Transaction:
         self.id = id()
         self.type = ""
         self.timestamp = datetime.now()
-        self.input = {"user_id": "", "land_id": "", "amount": 0}
-        self.output = {"user_id": ""}
+        self.input: InputType = {"user_id": "", "land_id": "", "amount": 0}
+        self.output: OutputType = {"user_id": ""}
 
     @staticmethod
     def newLDTransaction(sender_id: str, land_id: str) -> 'Transaction':
-        input = {
+        input: InputType = {
             "user_id": sender_id,
             "land_id": land_id,
             "amount": 0
         }
-        output = {
+        output: OutputType = {
             "user_id": sender_id
         }
         return Transaction.generateTransaction(Transaction.LD_TRANSACTION, input, output)
 
     @staticmethod
     def newLTTransaction(sender_id: str, land_id: str, receiver_id: str) -> 'Transaction':
-        input = {
+        input: InputType = {
             "user_id": sender_id,
             "land_id": land_id,
             "amount": 0
         }
-        output = {
+        output: OutputType = {
             "user_id": receiver_id
         }
         return Transaction.generateTransaction(Transaction.LT_TRANSACTION, input, output)
 
     @staticmethod
     def newSTTransaction(sender_id: str, amount: int):
-        input = {
+        input: InputType = {
             "user_id": sender_id,
             "land_id": "",
             "amount": amount
         }
-        output = {
+        output: OutputType = {
             "user_id": sender_id
         }
         return Transaction.generateTransaction(Transaction.ST_TRANSACTION, input, output)
 
     @staticmethod
-    def generateTransaction(type: str, input, output):
+    def generateTransaction(type: str, input: InputType, output: OutputType):
         transaction = Transaction()
         transaction.type = type
         transaction.timestamp = datetime.now()
@@ -63,11 +73,14 @@ class Transaction:
     def serialize(transaction):
         return pickle.dumps(transaction)
     
+    def __repr__(self) -> str:
+        return f"{colored(self.id, 'yellow')} [{colored(str(self.timestamp), 'cyan')}]: {str(self)}"
+    
     def __str__(self) -> str:
         if self.type == Transaction.LD_TRANSACTION:
-            return f"{self.id} [{self.timestamp}]: {self.input['user_id']} owns {self.input['land_id']}"
+            return f"{self.input['user_id']} owns {self.input['land_id']}"
         elif self.type == Transaction.LT_TRANSACTION:
-            return f"{self.id} [{self.timestamp}]: {self.input['user_id']} transferred {self.input['land_id']} to {self.output['user_id']}"
+            return f"{self.input['user_id']} transferred {self.input['land_id']} to {self.output['user_id']}"
         elif self.type == Transaction.ST_TRANSACTION:
-            return f"{self.id} [{self.timestamp}]: {self.input['user_id']} staked {self.input['amount']} coins"
+            return f"{self.input['user_id']} staked {self.input['amount']} coins"
         return "Invalid transaction type"

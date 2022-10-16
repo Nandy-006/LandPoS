@@ -1,12 +1,12 @@
-import random
+from copy import deepcopy
+from termcolor import colored
+from tabulate import tabulate
+
 from blockchain.block import Block
 from blockchain.blockchain import Blockchain
 from blockchain.transaction import Transaction
-from blockchain.constants import BLOCK_TRANSACTION_THRESHOLD
 from utils.utils import Log, Command
 from network.node import Node
-from termcolor import colored
-from tabulate import tabulate
 
 class Commands:
 
@@ -19,11 +19,12 @@ class Commands:
 
     # Node independent
     TRANSACTION = Command("transaction", "transaction <transaction_id>", "Get details of a transaction on the blockchain")
-    BLOCK = Command("block", "block <n>", "Get nth block in the blockchain")
+    BLOCK = Command("block", "block <n>", "Get nth block in the blockchain (-1 for last block)")
     HISTORY = Command("history", "history <land_id>", "Get history of land owners")
     BLOCKCHAIN = Command("blockchain", "blockchain", "Get the blockchain")
     LANDS = Command("lands", "lands", "Get all registered lands and their owners")
     POOL = Command("pool", "pool", "Get the current transaction pool")
+    NODES = Command("nodes", "nodes", "Get all registered nodes")
 
     # Network
     HELP = Command("help", "help", "List all commands")
@@ -31,19 +32,21 @@ class Commands:
 
 class Network:
 
-    INVALID_COMMAND = f"Invalid command (use {colored(Commands.HELP.key, attrs=['bold'])} to list all commands)"
-
     def __init__(self) -> None:
-        self.nodes: dict[int, Node] = {}
+        self.nodes: dict[str, Node] = {}
     
-    def registerNode(self, id: int, balance: int) -> None:
+    def registerNode(self, id: str, balance: int) -> None:
         if id in self.nodes:
             Log.error("Node already exists")
             return None
-        
-        newNode = Node(id, balance)
+
+        if len(self.nodes) == 0:
+            newNode = Node(id, balance, Blockchain(), [])
+        else:
+            existingNode = list(self.nodes.values())[0]
+            newNode = Node(id, balance, deepcopy(existingNode.blockchain), deepcopy(existingNode.transactionPool))
         self.nodes[id] = newNode
-        Log.info(f"Node {id} has joined the network", "New Node")
+        Log.info(f"Node {id} has joined the network", "NEW NODE")
     
     def start(self):
         Log.info("Starting the network")
@@ -58,44 +61,110 @@ class Network:
 
     def run(self, command: str) -> None:
         self.handle(command.split(" "))
+    
+    def nodeExists(self, nodeId: str | None = None) -> bool:
+        if nodeId is None:
+            if len(self.nodes) <= 0:
+                Log.error(f"At least one node needs to be registered in the network")
+                return False
+            return True
+        
+        if nodeId not in self.nodes:
+            Log.error(f"Node ID {nodeId} is invalid")
+            return False
+        return True
 
     def handle(self, command: list[str]) -> None:
-        try:
-            nodeId = int(command[0])
-            if len(command) == 1:
-                Log.error(Network.INVALID_COMMAND)
-                return
-            if command[1] == Commands.REGISTER.key:
-                pass
-            elif command[1] == Commands.BUY.key:
-                pass
-            elif command[1] == Commands.SELL.key:
-                pass
-            elif command[1] == Commands.STAKE.key:
-                pass
-            elif command[1] == Commands.BALANCE.key:
-                pass
-            else:
-                Log.error(Network.INVALID_COMMAND)
-        except:
-            if command[0] == Commands.HELP.key:
+        match command:
+            case [nodeId, "register", landId]:
+                if self.nodeExists(nodeId):
+                    transaction = self.nodes[nodeId].registerLand(landId)
+                    self.broadcastTransaction(transaction)
+            case [nodeId, "buy", landId]:
+                if self.nodeExists(nodeId):
+                    transaction = self.nodes[nodeId].buyLand(landId)
+                    if transaction is not None:
+                        self.broadcastTransaction(transaction)
+            case [nodeId, "sell", landId, receiverId]:
+                if self.nodeExists(nodeId) and self.nodeExists(receiverId):
+                    transaction = self.nodes[nodeId].sellLand(receiverId, landId)
+                    self.broadcastTransaction(transaction)
+            case [nodeId, "stake", amount]:
+                try:
+                    amount = int(amount)
+                except:
+                    Log.error("Invalid amount provided")
+                    return
+                if self.nodeExists(nodeId):
+                    transaction = self.nodes[nodeId].stake(amount)
+                    if transaction is not None:
+                        self.broadcastTransaction(transaction)
+            case [nodeId, "balance"]:
+                if self.nodeExists(nodeId):
+                    print(f"{colored('BALANCE', attrs=['bold'])}: {self.nodes[nodeId].balance}")
+            case ["transaction", trId]:
+                if self.nodeExists():
+                    node = list(self.nodes.values())[0]
+                    transaction = node.blockchain.getTransaction(trId)
+                    if transaction is not None:
+                        print(repr(transaction))
+            case ["block", height]:
+                if self.nodeExists():
+                    node = list(self.nodes.values())[0]
+                    try:
+                        height = int(height)
+                    except:
+                        Log.error("Block height (n) needs to be an integer")
+                        return
+                    if height == -1:
+                        block = node.blockchain.getLastBlock()
+                    else:
+                        block = node.blockchain.getBlockFromHeight(height)
+                    if block is not None:
+                        print(block)
+            case ["history", landId]:
+                if self.nodeExists():
+                    node = list(self.nodes.values())[0]
+                    history = node.blockchain.getLandHistory(landId)
+                    if len(history) == 0:
+                        Log.error("Unknown Land ID")
+                        return None
+                    Log.info(f"Transactions associated with land {landId}", "LAND HISTORY")
+                    for transaction in history:
+                        print(repr(transaction))
+            case ["blockchain"]:
+                if self.nodeExists():
+                    node = list(self.nodes.values())[0]
+                    print(node.blockchain)
+            case ["lands"]:
+                if self.nodeExists():
+                    node = list(self.nodes.values())[0]
+                    landOwners = node.blockchain.getLandOwners()
+                    Log.info(f"List of available lands", "LANDS")
+                    for land in landOwners.keys():
+                        print(f"* {land}")
+            case ["pool"]:
+                if self.nodeExists():
+                    node = list(self.nodes.values())[0]
+                    pool = node.transactionPool
+                    if len(pool) == 0:
+                        Log.info("The transaction pool is empty", "TRANSACTION POOL")
+                    else:
+                        Log.info("Currently the transaction pool contains the following transactions", "TRANSACTION POOL")
+                        for transaction in pool:
+                            print(repr(transaction))
+            case ["nodes"]:
+                if len(self.nodes) <= 0:
+                    Log.info("No node is registered to the network")
+                else:
+                    for nodeId in self.nodes.keys():
+                        print(f"- {nodeId}")
+            case ["help"]:
                 self.printCommands()
-            elif command[0] == Commands.STOP.key:
+            case ["stop"]:
                 return
-            elif command[0] == Commands.TRANSACTION.key:
-                pass
-            elif command[0] == Commands.BLOCK.key:
-                pass
-            elif command[0] == Commands.HISTORY.key:
-                pass
-            elif command[0] == Commands.BLOCKCHAIN.key:
-                pass
-            elif command[0] == Commands.LANDS.key:
-                pass
-            elif command[0] == Commands.POOL.key:
-                pass
-            else:
-                Log.error(Network.INVALID_COMMAND)
+            case _:
+                print(f"Invalid command (use {colored(Commands.HELP.key, attrs=['bold'])} to list all commands)")
     
     def printCommands(self) -> None:
         commands = []
@@ -104,75 +173,17 @@ class Network:
                 commands.append([command.key, command.syntax, command.help])
         print(tabulate(commands, headers=["Command", "Syntax", "Description"], tablefmt="simple"))
     
-    def getValidator(self) -> Node:
-        validators = random.choices(
-            list(self.nodes.values()),
-            [node.stake * node.age + 1 for node in list(self.nodes.values())],
-            k = 1
-        )
-        return validators[0]
-    
     def broadcastTransaction(self, transaction: Transaction) -> None:
-        self.transactionPool.append(transaction)
-        if len(self.transactionPool) >= BLOCK_TRANSACTION_THRESHOLD:
-            validator = self.getValidator()
-            block = validator.mint(self.transactionPool, self.lands, self.nodes, self.blockchain)
-            if block is None:
-                Log.error("All transactions are invalid. No new block minted")
-                return
-            self.addBlock(block)
+        validator = None
+        for node in self.nodes.values():
+            isMinting = node.addTransaction(transaction, list(self.nodes.keys()))
+            if isMinting:
+                validator = node
+        if validator is not None:
+            block = validator.mint()
+            self.broadcastBlock(block)
     
-    def addBlock(self, block: Block) -> None:
-        if self.blockchain.addBlock(block) is None:
-            Log.error(f"Invalid block\n {block}")
-            return
-        
-        for _, node in self.nodes.items():
-            if node.id == block.validator:
-                node.age = 0
-            else:
-                node.age += 1
-        
-        for transaction in block.data:
-            if transaction.type == Transaction.LD_TRANSACTION:
-                self.lands[transaction.input["land_id"]] = self.nodes[transaction.input["user_id"]]
-            elif transaction.type == Transaction.LT_TRANSACTION:
-                self.lands[transaction.input["land_id"]] = self.nodes[transaction.output["user_id"]]
-            elif transaction.type == Transaction.ST_TRANSACTION:
-                node = self.nodes[transaction.input["user_id"]]
-                node.balance -= transaction.input["amount"]
-                node.stake += transaction.input["amount"]
-            else:
-                Log.error(f"<{transaction}> is of invalid type {transaction.type}")
-        
-        self.transactionPool = []
-
-    def registerLand(self, node: Node, land: str) -> None:
-        transaction = Transaction.newLDTransaction(node.id, land)
-        Log.info(f"{node.id} owns land {land}", "New Transaction")
-        self.broadcastTransaction(transaction)
-
-    def stake(self, node: Node, amount: int) -> None:
-        transaction = Transaction.newSTTransaction(node.id, amount)
-        Log.info(f"{node.id} staked {amount} coins", "New Transaction")
-        self.broadcastTransaction(transaction)
-    
-    def buy(self, buyer: Node, land: str) -> None:
-        seller = self.lands[land]
-        transaction = Transaction.newLTTransaction(seller.id, land, buyer.id)
-        Log.info(f"{buyer.id} buys land {land} from {seller.id}", "New Transaction")
-        self.broadcastTransaction(transaction)
-
-    def sell(self, seller: Node, buyer: Node, land: str) -> None:
-        transaction = Transaction.newLTTransaction(seller.id, land, buyer.id)
-        Log.info(f"{seller.id} sells land {land} to {buyer.id}", "New Transaction")
-        self.broadcastTransaction(transaction)
-
-    def getLandHistory(self, land: str) -> None:
-        history = self.blockchain.getLandHistory(land)
-        if len(history) == 0:
-                Log.error("Unknown Land ID")
-                return None
-        Log.info(f"Transactions associated with land {land}", "Land History")
-        for transaction in history:
-            print(f"- {transaction.timestamp}: {transaction.input['user_id']}")    
+    def broadcastBlock(self, block: Block | None) -> None:
+        Log.info("Broadcasting minted block to all nodes")
+        for node in self.nodes.values():
+            node.addBlock(block)
