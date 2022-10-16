@@ -9,7 +9,7 @@ class Node:
         self.id = id
         self.balance = balance
         self.stake = 0
-        self.age = 0
+        self.age = 1
     
     def mint(self, transactionPool: list[Transaction], lands: dict, nodes: dict, blockchain: Blockchain) -> Block | None:
         blockTransactions = []

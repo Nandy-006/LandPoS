@@ -4,6 +4,7 @@ from blockchain.transaction import Transaction
 from blockchain.constants import BLOCK_TRANSACTION_THRESHOLD
 from utils.utils import Log
 from network.node import Node
+import random
 
 class Network:
 
@@ -22,12 +23,13 @@ class Network:
         self.nodes[id] = newNode
         return newNode
     
-    def getValidator(self) -> Node:
-        validators = []
-        for _, node in self.nodes.items():
-            validators.append((node.stake * node.age, node.id))
-        validators.sort(reverse=True)
-        return self.nodes[validators[0][1]]
+    def getValidator(self):
+        validator = random.choices(
+            self.nodes.items(),
+            [node.stake * node.age for node in self.nodes.items()],
+            k = 1
+        )[0]
+        return validator
     
     def broadcastTransaction(self, transaction: Transaction) -> None:
         self.transactionPool.append(transaction)
