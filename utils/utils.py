@@ -1,5 +1,5 @@
 import uuid
-from simple_chalk import blue, red
+from termcolor import colored
 
 class Command:
     def __init__(self, key: str, help: str) -> None:
@@ -12,11 +12,11 @@ class Command:
 class Log:
     @staticmethod
     def info(message: str) -> None:
-        print(f"{blue.bold('INFO')}: {message}")
+        print(f"{colored('INFO', 'blue', attrs=['bold'])}: {message}")
     
     @staticmethod
     def error(message: str) -> None:
-        print(f"{red.bold('ERROR')}: {message}")
+        print(f"{colored('ERROR', 'red', attrs=['bold'])}: {message}")
 
 def id() -> str:
     return str(uuid.uuid4())

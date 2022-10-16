@@ -55,8 +55,9 @@ class Network:
             elif transaction.type == Transaction.LT_TRANSACTION:
                 self.lands[transaction.input["land_id"]] = self.nodes[transaction.output["user_id"]]
             elif transaction.type == Transaction.ST_TRANSACTION:
-                self.nodes[transaction.input["user_id"]].balance -= self.nodes[transaction.input["amount"]]
-                self.nodes[transaction.input["user_id"]].stake += self.nodes[transaction.input["amount"]]
+                node = self.nodes[transaction.input["user_id"]]
+                node.balance -= transaction.input["amount"]
+                node.stake += transaction.input["amount"]
             else:
                 Log.error(f"<{transaction}> is of invalid type {transaction.type}")
         
