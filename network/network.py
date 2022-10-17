@@ -197,9 +197,9 @@ class Network:
                     if balance <= 0:
                         Log.error("Balance needs to be positive")
                         return
+                    self.connectNode(nodeId, balance)
                 except:
                     Log.error("Balance needs to be an integer")
-                self.connectNode(nodeId, balance)
             case ["save"]:
                 with open(Network.DEFAULT_NETWORK_FILE, "wb") as f:
                     pickle.dump(self, f)
