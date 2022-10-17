@@ -10,16 +10,14 @@ A land management system using Proof of Stake consensus based blockchain
 
 `2019A7PS0158H` - Vraj Ketan Gandhi
 
-## Running the blockchain network
+# Running the blockchain network
 
-### Requirements
+## Requirements
 
-<li> Python 3.10
-<li> pip
+- `Python 3.10`
+- `pip`
 
-<br>
-
-### Folder contents
+## Folder contents
 
 The root folder consists of:
 
@@ -32,9 +30,7 @@ in the network.
 <br>
 `demo.py` contains a sample test case containing three nodes and covering all possible operations that can be performed in the network.
 
-<br>
-
-### Steps to run program
+## Steps to run program
 
 1. From the root directory, run `pip install -r requirements.txt`
 2. To execute `demo.py`, run `python demo.py`
@@ -61,7 +57,7 @@ The blockchain supports 4 types of transactions
 4. **Stake Increase**
    The transaction used by a user to increase their stake in the network
 
-# Function Definitions:
+# Function Definitions
 
 ## Network
 
@@ -86,8 +82,6 @@ The `Network` class represents a blockchain network. It manages all communicatio
 | `mint()`                 | This function calls the validator on all the transactions in the transaction pool                                                                                                                                                                                   |
 | `validate()`             | This function actually validates all the transactions passed to it and returns a boolean based on whether the transaction is valid                                                                                                                                  |
 | `addBlock()`             | Once all the transactions are validated, this function will mint and return the new block. The **broadcastBlock()** function will then broadcast the block to all nodes.                                                                                            |
-
-<br>
 
 ### `node.py`
 
