@@ -10,8 +10,8 @@ from blockchain.transaction import Transaction
 from utils.utils import Log, Command
 from network.node import Node
 
+# All commands that the user can execute at the terminal
 class Commands:
-
     # Node specific
     REGISTER = Command("register", "<node_id> register <land_id>", "Register new land under node")
     BUY = Command("buy", "<node_id> buy <land_id> <seller_id>", "Buy specified land")
@@ -35,6 +35,7 @@ class Commands:
     HELP = Command("help", "help", "List all commands")
     STOP = Command("stop", "stop", "Stop the network")
 
+# Network represents a blockchain network. It manages all communications between nodes.
 class Network:
 
     DEFAULT_NETWORK_FILE = "blockchain.net"
@@ -42,6 +43,7 @@ class Network:
     def __init__(self) -> None:
         self.nodes: dict[str, Node] = {}
     
+    # Connects a new node to the network
     def connectNode(self, id: str, balance: int) -> None:
         Log.info(f"Node {id} is trying to join the network", "NEW NODE")
         if id in self.nodes:
@@ -58,6 +60,7 @@ class Network:
         self.broadcastTransaction(transaction)
         Log.info(f"Node {id} has joined the network", "NEW NODE")
     
+    # Start the blockchain network and listen to user inputs
     def start(self) -> None:
         Log.info("Starting the network")
         while True:
@@ -70,10 +73,12 @@ class Network:
                 print()
         Log.info("Stopped the network")
 
+    # Run a specified command on the network
     def run(self, command: str) -> None:
         Log.info(command, "RUN")
         self.handle(command.split(" "))
     
+    # A helper function to check if a given node (or at least one node) exists on the network
     def nodeExists(self, nodeId: str | None = None) -> bool:
         if nodeId is None:
             if len(self.nodes) <= 0:
@@ -86,6 +91,7 @@ class Network:
             return False
         return True
 
+    # Handle user commands
     def handle(self, command: list[str]) -> None:
         match command:
             case [nodeId, "register", landId]:
@@ -218,6 +224,7 @@ class Network:
             case _:
                 print(f"Invalid command (use {colored(Commands.HELP.key, attrs=['bold'])} to list all commands)")
     
+    # Displays all available commands
     def printCommands(self) -> None:
         commands = []
         for _, command in vars(Commands).items():
@@ -229,6 +236,7 @@ class Network:
             colored("Description", attrs=['bold'])
             ], tablefmt="simple"))
     
+    # Broadcast new transaction to all nodes so that they can add it to their transaction pools
     def broadcastTransaction(self, transaction: Transaction) -> None:
         Log.info(f"Broadcasting transaction {colored(transaction.id, 'yellow')} to all nodes")
         validator = None
@@ -243,6 +251,7 @@ class Network:
             block = validator.mint()
             self.broadcastBlock(block)
     
+    # Broadcasts the new minted block to all nodes so that they can add it to their blockchains
     def broadcastBlock(self, block: Block | None) -> None:
         if block is not None:
             Log.info(f"Broadcasting minted block {block.id} to all nodes")
