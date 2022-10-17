@@ -22,28 +22,34 @@ Holds the code implementation for the representation of the blockchain network.
 This file contains classes pertaining to the commands a node in the blockchain can execute.
 The Comands class contains all the possible commands and the Network contains all the implementation of all the commands.
 
-- connectNode(self, id: str, balance: int) : Node joins the network
-- start(self) : Starts the blockchain network. It will remain in an infinite loop, taking the user's commands and executing them via the handle function until the exit command is invoked. 
-- def handle(self, command: list[str]) : Takes in the command input by a user node and calls the relevant function for executing that command. For example, inputting the "SELL" command causes the node to begin the process for selling a land. It contains a switch case for the list of commands in the Commands class.
-- printCommands(self) : Invokes the Help command which just displays all the available commands.
-- broadcastTransaction(self, transaction: Transaction) : broadcasts the new transaction to all nodes
-- def broadcastBlock(self, block: Block | None) : broadcasts the new minted block to all nodes
-<!-- - processConnect(self, message: str) : Connects the node to the blockchain.
-- processBuy(self, message: str) : Initiates a new transaction for buying a land. If an incorrect land ID is provided then an error message is shown. It takes the land ID as input.
-- processSell(self, message: str) : Initiates a new transaction for selling a land. Makes sure that the land is owned by you and the buyer is within the network else throws an error. It takes land ID and the buyer node's ID as input.
-- processStake(self, message: str) : Increases the stake of the node. If the wallet limit is exceeded then an error message is thrown. It takes the stake amount as input.
-- processBlock(self, message: str) : Retrieves and displays a block from the blockchain. Takes height of the block as input.
-- processLand(self, message: str) :  Retrieves the transaction history of the land ID that is passed as input.
-- processTransaction(self, message: str) : Retrieves a transaction for validation purposes based. The transaction ID is passed as input.
-- processBalance(self) : Retrieves wallet balance of the node. -->
 
-NOTE: All these functions do not return anything.
+| Function                 | Definition                                                                                            |
+|--------------------------|-------------------------------------------------------------------------------------------------------|
+| `connectNode()`          | Connects a new node to the network                                                                    |
+| `start()`                | Starts the blockchain network which listens to the user inputs                                        |
+| `handle()`               | Takes in the command input by a user node and calls the relevant function for executing that command  |
+| `printCommands()`        | Invokes the Help command which just displays all the available commands                               |
+| `broadcastTransaction()` | broadcasts the new transaction to all nodes                                                           |
+| `broadcastBlock()`       | broadcasts the new minted block to all nodes                                                          |
+|                          |                                                                                                       |
+
 <br>
 
 ### `node.py`
 
-This file contains the implementation of all the commands pertaining to operating a node.
+This file contains the implementation of all the commands pertaining to operating a node as well as the **Proof of Stake consensus algorithm**
 
-- getValidator(self) : This contains the implementation for the PoS consensus. The node with the maximum coin age value is chosen as the validator, and the validator mints the new block. The age of the node's coins is the depth of the block they mined previously. The coinage of the node is the product of the age and the number of coins they staked. This function will return the validator node's ID.
+| Function           | Definition                                                                                                                                                                                                                                                          |
+|--------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `registerCoins()`  | Adds coins to the new node's wallet on registration                                                                                                                                                                                                                 |
+| `start()`          | Adds coins to the new node's wallet on registration                                                                                                                                                                                                                 |
+| `registerLand()`   | Declares ownership of a land by a node and returns a transaction of it                                                                                                                                                                                              |
+| `buyLand()`        | Allows the node to buy a land and returns a transaction of it                                                                                                                                                                                                       |
+| `sellLand()`       | Allows the node to sell a land and returns a transaction of it                                                                                                                                                                                                      |
+| `stake()`          | Increases the stake of the user and returns a transaction of it                                                                                                                                                                                                     |
+| `addTransaction()` | Appends the transaction passed to it into the pool. If the pool has crossed its threshold then a new validator is searched.                                                                                                                                         |
+| `getValidator()`   | **This contains the implementation for the PoS consensus**. The probability of a validator being selected is directly dependent on the stake the node holds in the blockchain. The validator mints the new block.This function will return the validator node's ID. |
+| `mint()`           | This function calls the validator on all the transactions in the transaction pool                                                                                                                                                                                   |
+| `validate()`       | This function actually validates all the transactions passed to it and returns a boolean based on whether the transaction is valid                                                                                                                                  |
+| `addBlock()`       | Once all the transactions are validated, this function will mint and return the new block. The  **broadcastBlock()**  function will then broadcast the block to all nodes.                                                                                          |
 
-- mintBlock(self) : Once the transactions are validated by the chosen validator, the validator adds the block to the chain by minting a new block and the transaction pool is updated. 
