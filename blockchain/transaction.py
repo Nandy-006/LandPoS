@@ -1,3 +1,4 @@
+from os import stat
 import pickle
 from datetime import datetime
 from termcolor import colored
@@ -13,6 +14,7 @@ class InputType(TypedDict):
 class OutputType(TypedDict):
     user_id: str
 class Transaction:
+    RC_TRANSACTION = 'Receive Coins'
     LD_TRANSACTION = 'Land Declaration'
     LT_TRANSACTION = 'Land Transfer'
     ST_TRANSACTION = 'Stake Increase'
@@ -23,6 +25,18 @@ class Transaction:
         self.timestamp = datetime.now()
         self.input: InputType = {"user_id": "", "land_id": "", "amount": 0}
         self.output: OutputType = {"user_id": ""}
+
+    @staticmethod
+    def newRCTransaction(receiver_id: str, amount: int) -> 'Transaction':
+        input: InputType = {
+            "user_id": receiver_id,
+            "land_id": "",
+            "amount": amount
+        }
+        output: OutputType = {
+            "user_id": receiver_id
+        }
+        return Transaction.generateTransaction(Transaction.RC_TRANSACTION, input, output)
 
     @staticmethod
     def newLDTransaction(sender_id: str, land_id: str) -> 'Transaction':
@@ -77,7 +91,9 @@ class Transaction:
         return f"{colored(self.id, 'yellow')} [{colored(str(self.timestamp), 'cyan')}]: {str(self)}"
     
     def __str__(self) -> str:
-        if self.type == Transaction.LD_TRANSACTION:
+        if self.type == Transaction.RC_TRANSACTION:
+            return f"{self.input['user_id']} received {self.input['amount']} coins from the network"
+        elif self.type == Transaction.LD_TRANSACTION:
             return f"{self.input['user_id']} owns {self.input['land_id']}"
         elif self.type == Transaction.LT_TRANSACTION:
             return f"{self.input['user_id']} transferred {self.input['land_id']} to {self.output['user_id']}"
