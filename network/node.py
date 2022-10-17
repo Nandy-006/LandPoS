@@ -56,11 +56,11 @@ class Node:
         return False
 
     # PROOF OF STAKE CONSENSUS
-    # A validator is selected from the set of nodes in the network. This done by using the coinage of the nodes.
+    # A validator is selected from the set of nodes in the network. This is done by using the coinage of the nodes.
     # Stake - The amount of coins staked by the node in the network
     # Age - The number of blocks since the last block minted by a node
     # Coinage - The product of stake and age
-    # A node is randomly chose as a validator (Weighted by their coinages)
+    # A node is randomly chosen as a validator (Weighted by their coinages)
     def getValidator(self, peers: list[str]) -> str:
         stakes = self.blockchain.getStakes(peers)
         ages = self.blockchain.getAges(peers)
