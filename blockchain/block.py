@@ -8,6 +8,17 @@ from blockchain.merkle_tree import MerkleTree
 from blockchain.transaction import Transaction
 from blockchain.constants import GENESIS_BLOCK_MERKLE_ROOT, GENESIS_BLOCK_VALIDATOR, GENESIS_BLOCK_PREVIOUS_BLOCK_HASH, GENESIS_BLOCK_DATA
 
+# The Block class is used to represent a block in the blockchain and has methods relating to creating and modifying blocks
+# The structure of the block is as follows
+#
+# BLOCK HEADER
+#   ID: The height of the block
+#   Timestamp: The timestamp when the block was minted
+#   Prev. block hash: The hash of the previous block
+#   Merkle Root: The merkle root of the transactions in the block
+#   Validator: The ID of the validator of the block
+# BLOCK DATA
+#   Transaction 1 ... n 
 class Block:
     def __init__(
         self,

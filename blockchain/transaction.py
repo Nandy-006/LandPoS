@@ -13,6 +13,21 @@ class InputType(TypedDict):
 
 class OutputType(TypedDict):
     user_id: str
+
+# A Transaction is a transfer of value in a blockchain
+# There are four types of transaction that this class provides
+#
+# 1. Receive Coins
+# When a new node is connected, it is the amount of coins provided to it by the network ( specified by the user during node creation)
+#
+# 2. Land Declaration
+# The transaction that a user uses to register a new land under their name
+# 
+# 3. Land Transfer
+# The transaction that a user uses to transfer ownership of a land they own to another user
+#
+# 4. Stake Increase
+# The transaction used by a user to increase their stake in the network
 class Transaction:
     RC_TRANSACTION = 'Receive Coins'
     LD_TRANSACTION = 'Land Declaration'
