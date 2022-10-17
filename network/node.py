@@ -7,6 +7,7 @@ from blockchain.transaction import Transaction
 from blockchain.constants import BLOCK_TRANSACTION_THRESHOLD
 from utils.utils import Log
 
+# Node represents a single user on the blockchain network
 class Node:
 
     def __init__(self, id: str, blockchain: Blockchain, transactionPool: list[Transaction]) -> None:
@@ -14,31 +15,37 @@ class Node:
         self.blockchain = blockchain
         self.transactionPool = transactionPool
 
+    # Inititates a transaction to set the node's initial balance
     def registerCoins(self, amount: int) -> Transaction:
         transaction = Transaction.newRCTransaction(self.id, amount)
         Log.info(f"{self.id} received {amount} coins from the network", "INITIATE TRANSACTION", self.id)
         return transaction
     
+    # Initates a new transaction to register a new land under the user
     def registerLand(self, landId: str) -> Transaction:
         transaction = Transaction.newLDTransaction(self.id, landId)
         Log.info(f"{self.id} owns land {landId}", "INITIATE TRANSACTION", self.id)
         return transaction
     
+    # Initiates a new transaction for buying a land
     def buyLand(self, landId: str, sellerId: str) -> Transaction:
         transaction = Transaction.newLTTransaction(sellerId, landId, self.id)
         Log.info(f"{self.id} buys land {landId} from {sellerId}", "INITIATE TRANSACTION", self.id)
         return transaction
     
+    # Initiates a new transaction for selling a land
     def sellLand(self, buyerId: str, landId: str) -> Transaction:
         transaction = Transaction.newLTTransaction(self.id, landId, buyerId)
         Log.info(f"{self.id} sells land {landId} to {buyerId}", "INITIATE TRANSACTION", self.id)
         return transaction
     
+    # Initiate a new transaction to increase the stake of a node
     def stake(self, amount: int) -> Transaction:
         transaction = Transaction.newSTTransaction(self.id, amount)
         Log.info(f"{self.id} stakes {amount} coins", "INITIATE TRANSACTION", self.id)
         return transaction
     
+    # Adds a transaction to the transaction pool
     def addTransaction(self, transaction: Transaction, peers: list[str]) -> bool:
         self.transactionPool.append(transaction)
         Log.info(f"Added {colored(transaction.id, 'yellow')} to pool", nodeId=self.id)
@@ -48,6 +55,12 @@ class Node:
                 return True
         return False
 
+    # PROOF OF STAKE CONSENSUS
+    # A validator is selected from the set of nodes in the network. This done by using the coinage of the nodes.
+    # Stake - The amount of coins staked by the node in the network
+    # Age - The number of blocks since the last block minted by a node
+    # Coinage - The product of stake and age
+    # A node is randomly chose as a validator (Weighted by their coinages)
     def getValidator(self, peers: list[str]) -> str:
         stakes = self.blockchain.getStakes(peers)
         ages = self.blockchain.getAges(peers)
@@ -63,6 +76,8 @@ class Node:
         )
         return validators[0]
     
+    # Minting
+    # The validator chosen validates all transactions and mints a block
     def mint(self) -> Block | None:
         blockData: list[Transaction] = []
         landOwners = self.blockchain.getLandOwners()
@@ -92,6 +107,21 @@ class Node:
         print(block)
         return block
 
+    # Transaction validation
+    # Receive Coins Transaction
+    #   Is assumed to be valid since it is initiated by the network
+    #
+    # Land Declaration Transaction
+    #   Is invalid if the land is already declared by someone else
+    #
+    # Land Transfer Transaction
+    #   Is invalid if the land is not registered
+    #   Is invalid if the seller is not the owner of the land
+    #   Is invalid if the buyer and seller is the same
+    #
+    # Stake Increase Transaction
+    #   Is invalid if the user's balance is less than the amount they are trying to stake 
+    #   Is invalid if the amount specified is negative or 0
     def validate(self, transaction: Transaction, landOwners: dict[str, str], balances: dict[str, int]) -> bool:
         if transaction.type == Transaction.RC_TRANSACTION:
             pass
@@ -153,6 +183,7 @@ class Node:
         Log.info(f"Transaction {colored(transaction.id, 'yellow')}: {str(transaction)} is {colored('valid', 'green')}", "MINTING", self.id)
         return True
     
+    # Adds a block to the transaction and empties the transaction pool
     def addBlock(self, block: Block | None) -> None:
         self.transactionPool = []
 
