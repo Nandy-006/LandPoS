@@ -157,10 +157,10 @@ class Network:
                 if self.nodeExists():
                     node = list(self.nodes.values())[0]
                     landOwners = node.blockchain.getLandOwners()
-                    Log.info(f"List of available lands and their owners", "LANDS")
                     if len(landOwners) == 0:
                         Log.info("There are no lands registered in the network yet")
                     else:
+                        Log.info(f"List of available lands and their owners", "LANDS")
                         print(tabulate(
                             [[land, owner] for land, owner in landOwners.items()],
                             headers=[colored("Land", attrs=["bold"]), colored("Owner", attrs=["bold"])],
@@ -250,7 +250,7 @@ class Network:
         if validator is not None:
             print()
             Log.info(f"Block Transaction Threshold of {BLOCK_TRANSACTION_THRESHOLD} reached. Proceeding to mint new block")
-            Log.info(f"{validator.id} is chosen as the validator", "MINTING")
+            Log.info(f"{colored(validator.id, attrs=['bold'])} is chosen as the validator", "MINTING")
             block = validator.mint()
             self.broadcastBlock(block)
     
