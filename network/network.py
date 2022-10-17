@@ -48,7 +48,7 @@ class Network:
         self.nodes[id] = newNode
         Log.info(f"Node {id} has joined the network", "NEW NODE")
     
-    def start(self):
+    def start(self) -> None:
         Log.info("Starting the network")
         while True:
             command = input("\n> ").split(" ")
