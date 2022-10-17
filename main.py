@@ -1,12 +1,19 @@
+import sys
+import pickle
+
 from network.network import Network
+from utils.utils import Log
 
 if __name__ == "__main__":
     
-    network = Network()
+    if len(sys.argv) > 1:
+        try:
+            with open(sys.argv[1], "rb") as f:
+                network = pickle.load(f)
+            Log.info(f"Successfully loaded network from file {sys.argv[1]}")
+        except:
+            Log.error(f"Invalid file {sys.argv[1]}")
+    else:
+        network = Network()
 
-    network.registerNode("3000", 100)
-    network.registerNode("3001", 200)
-
-    network.run("3000 register node")
-    network.run("3001 register node")
-    network.run("3001 stake 50")
+    network.start()

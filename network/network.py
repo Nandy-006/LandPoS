@@ -1,3 +1,4 @@
+import pickle
 from copy import deepcopy
 from termcolor import colored
 from tabulate import tabulate
@@ -24,28 +25,36 @@ class Commands:
     BLOCKCHAIN = Command("blockchain", "blockchain", "Get the blockchain")
     LANDS = Command("lands", "lands", "Get all registered lands and their owners")
     POOL = Command("pool", "pool", "Get the current transaction pool")
+    STAKES = Command("stakes", "stakes", "Get stakes of all nodes in the network")
     NODES = Command("nodes", "nodes", "Get all registered nodes")
 
     # Network
+    CONNECT = Command("connect", "connect <node_id>", "Connect new node to the network")
+    SAVE = Command("save", "save [<filename>]", "Save the network into a file")
     HELP = Command("help", "help", "List all commands")
     STOP = Command("stop", "stop", "Stop the network")
 
 class Network:
 
+    DEFAULT_NETWORK_FILE = "blockchain.net"
+
     def __init__(self) -> None:
         self.nodes: dict[str, Node] = {}
     
-    def registerNode(self, id: str, balance: int) -> None:
+    def connectNode(self, id: str, balance: int) -> None:
+        Log.info(f"Node {id} is trying to join the network", "NEW NODE")
         if id in self.nodes:
             Log.error("Node already exists")
             return None
 
         if len(self.nodes) == 0:
-            newNode = Node(id, balance, Blockchain(), [])
+            newNode = Node(id, Blockchain(), [])
         else:
             existingNode = list(self.nodes.values())[0]
-            newNode = Node(id, balance, deepcopy(existingNode.blockchain), deepcopy(existingNode.transactionPool))
+            newNode = Node(id, deepcopy(existingNode.blockchain), deepcopy(existingNode.transactionPool))
         self.nodes[id] = newNode
+        transaction = newNode.registerCoins(balance)
+        self.broadcastTransaction(transaction)
         Log.info(f"Node {id} has joined the network", "NEW NODE")
     
     def start(self) -> None:
@@ -65,7 +74,7 @@ class Network:
     def nodeExists(self, nodeId: str | None = None) -> bool:
         if nodeId is None:
             if len(self.nodes) <= 0:
-                Log.error(f"At least one node needs to be registered in the network")
+                Log.error(f"At least one node needs to be connected to the network")
                 return False
             return True
         
@@ -97,11 +106,10 @@ class Network:
                     return
                 if self.nodeExists(nodeId):
                     transaction = self.nodes[nodeId].stake(amount)
-                    if transaction is not None:
-                        self.broadcastTransaction(transaction)
+                    self.broadcastTransaction(transaction)
             case [nodeId, "balance"]:
                 if self.nodeExists(nodeId):
-                    print(f"{colored('BALANCE', attrs=['bold'])}: {self.nodes[nodeId].balance}")
+                    Log.info(f"{self.nodes[nodeId].blockchain.getBalance(nodeId)}", f"{colored('BALANCE', attrs=['bold'])}", nodeId)
             case ["transaction", trId]:
                 if self.nodeExists():
                     node = list(self.nodes.values())[0]
@@ -140,9 +148,15 @@ class Network:
                 if self.nodeExists():
                     node = list(self.nodes.values())[0]
                     landOwners = node.blockchain.getLandOwners()
-                    Log.info(f"List of available lands", "LANDS")
-                    for land in landOwners.keys():
-                        print(f"* {land}")
+                    Log.info(f"List of available lands and their owners", "LANDS")
+                    if len(landOwners) == 0:
+                        Log.info("There are no lands registered in the network yet")
+                    else:
+                        print(tabulate(
+                            [[land, owner] for land, owner in landOwners.items()],
+                            headers=[colored("Land", attrs=["bold"]), colored("Owner", attrs=["bold"])],
+                            tablefmt="simple"
+                        ))
             case ["pool"]:
                 if self.nodeExists():
                     node = list(self.nodes.values())[0]
@@ -153,12 +167,48 @@ class Network:
                         Log.info("Currently the transaction pool contains the following transactions", "TRANSACTION POOL")
                         for transaction in pool:
                             print(repr(transaction))
+            case ["stakes"]:
+                if self.nodeExists():
+                    node = list(self.nodes.values())[0]
+
+                    stakes = node.blockchain.getStakes(self.nodes)
+                    ages = node.blockchain.getAges(self.nodes)
+                    
+                    data = [[nodeId, stakes[nodeId], ages[nodeId], stakes[nodeId] * ages[nodeId]] for nodeId in stakes]
+                    Log.info("Current stakes in the blockchain", "STAKES")
+                    if len(data) == 0:
+                        Log.info("No one has staked in the network yet")
+                    else:
+                        print(tabulate(
+                            data, headers=[
+                                colored("Node", attrs=["bold"]),
+                                colored("Stake", attrs=["bold"]),
+                                colored("Age", attrs=["bold"]),
+                                colored("Coinage", attrs=["bold"])
+                            ] , tablefmt="simple"))
             case ["nodes"]:
                 if len(self.nodes) <= 0:
                     Log.info("No node is registered to the network")
                 else:
                     for nodeId in self.nodes.keys():
                         print(f"- {nodeId}")
+            case ["connect", nodeId, balance]:
+                try:
+                    balance = int(balance)
+                    if balance <= 0:
+                        Log.error("Balance needs to be positive")
+                        return
+                except:
+                    Log.error("Balance needs to be an integer")
+                self.connectNode(nodeId, balance)
+            case ["save"]:
+                with open(Network.DEFAULT_NETWORK_FILE, "wb") as f:
+                    pickle.dump(self, f)
+                Log.info(f"Successfully saved network to file {Network.DEFAULT_NETWORK_FILE}")
+            case ["save", filename]:
+                with open(filename, "wb") as f:
+                    pickle.dump(self, f)
+                Log.info(f"Successfully saved network to file {filename}")
             case ["help"]:
                 self.printCommands()
             case ["stop"]:
@@ -171,7 +221,11 @@ class Network:
         for _, command in vars(Commands).items():
             if type(command) == Command:
                 commands.append([command.key, command.syntax, command.help])
-        print(tabulate(commands, headers=["Command", "Syntax", "Description"], tablefmt="simple"))
+        print(tabulate(commands, headers=[
+            colored("Command", attrs=['bold']),
+            colored("Syntax", attrs=['bold']),
+            colored("Description", attrs=['bold'])
+            ], tablefmt="simple"))
     
     def broadcastTransaction(self, transaction: Transaction) -> None:
         validator = None

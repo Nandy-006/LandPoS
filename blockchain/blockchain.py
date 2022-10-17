@@ -62,7 +62,7 @@ class Blockchain:
     def getLastBlock(self) -> Block:
         return self.chain[-1]
     
-    def getStakes(self) -> dict[str, int]:
+    def getStakes(self, peers) -> dict[str, int]:
         stakes = {}
         for block in self.chain:
             for transaction in block.data:
@@ -70,16 +70,42 @@ class Blockchain:
                     nodeId = transaction.input["user_id"]
                     stake = transaction.input["amount"]
                     stakes[nodeId] = stakes[nodeId] + stake if nodeId in stakes else stake
+        for peer in peers:
+            if peer not in stakes:
+                stakes[peer] = 0
         return stakes
 
-    def getAges(self) -> dict[str, int]:
+    def getAges(self, peers) -> dict[str, int]:
         ages = {}
         for i, block in enumerate(self.chain):
             nodeId = block.validator
             ages[nodeId] = i
         for nodeId in ages:
             ages[nodeId] = self.getLength() - ages[nodeId] - 1
+        for peer in peers:
+            if peer not in ages:
+                ages[peer] = self.getLength()
         return ages
+
+    def getBalance(self, nodeId: str) -> int:
+        balance = 0
+        for block in self.chain:
+            for transaction in block.data:
+                if transaction.type == Transaction.RC_TRANSACTION and transaction.input["user_id"] == nodeId:
+                    balance += transaction.input["amount"]
+                elif transaction.type == Transaction.ST_TRANSACTION and transaction.input["user_id"] == nodeId:
+                    balance -= transaction.input["amount"]
+        return balance
+    
+    def getAllBalances(self) -> dict[str, int]:
+        balances = {}
+        for block in self.chain:
+            for transaction in block.data:
+                if transaction.type == Transaction.RC_TRANSACTION:
+                    balances[transaction.input["user_id"]] = transaction.input["amount"]
+                elif transaction.type == Transaction.ST_TRANSACTION:
+                    balances[transaction.input["user_id"]] -= transaction.input["amount"]
+        return balances
 
     def __str__(self) -> str:
         return "\n".join([colored("THE BLOCKCHAIN", "green", attrs=["bold"])] + [

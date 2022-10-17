@@ -9,11 +9,15 @@ from utils.utils import Log
 
 class Node:
 
-    def __init__(self, id: str, balance: int, blockchain: Blockchain, transactionPool: list[Transaction]) -> None:
+    def __init__(self, id: str, blockchain: Blockchain, transactionPool: list[Transaction]) -> None:
         self.id = id
-        self.balance = balance
         self.blockchain = blockchain
         self.transactionPool = transactionPool
+
+    def registerCoins(self, amount: int) -> Transaction:
+        transaction = Transaction.newRCTransaction(self.id, amount)
+        Log.info(f"{self.id} received {amount} coins from the network", "INITIATE TRANSACTION", self.id)
+        return transaction
     
     def registerLand(self, landId: str) -> Transaction:
         transaction = Transaction.newLDTransaction(self.id, landId)
@@ -34,10 +38,7 @@ class Node:
         Log.info(f"{self.id} sells land {landId} to {buyerId}", "INITIATE TRANSACTION", self.id)
         return transaction
     
-    def stake(self, amount: int) -> Transaction | None:
-        if amount > self.balance:
-            Log.error("Insufficient balance for this transaction")
-            return None
+    def stake(self, amount: int) -> Transaction:
         transaction = Transaction.newSTTransaction(self.id, amount)
         Log.info(f"{self.id} stakes {amount} coins", "INITIATE TRANSACTION", self.id)
         return transaction
@@ -51,16 +52,16 @@ class Node:
         return False
 
     def getValidator(self, peers: list[str]) -> str:
-        stakes = self.blockchain.getStakes()
-        ages = self.blockchain.getAges()
-        for peer in peers:
-            stakes[peer] = 0 if peer not in stakes else stakes[peer]
-            ages[peer] = 0 if peer not in ages else ages[peer]
+        stakes = self.blockchain.getStakes(peers)
+        ages = self.blockchain.getAges(peers)
+        coinages = [stakes[peer] * ages[peer] + 1 for peer in peers]
+        if sum(coinages) == 0:
+            coinages = [1] * len(coinages)
         
         random.seed(Block.hashBlock(self.blockchain.getLastBlock()))
         validators = random.choices(
             peers,
-            [stakes[peer] * ages[peer] + 1 for peer in peers],
+            coinages,
             k = 1
         )
         return validators[0]
@@ -68,14 +69,19 @@ class Node:
     def mint(self) -> Block | None:
         blockData: list[Transaction] = []
         landOwners = self.blockchain.getLandOwners()
+        balances = self.blockchain.getAllBalances()
         for transaction in self.transactionPool:
-            isValid = self.validate(transaction, landOwners)
+            isValid = self.validate(transaction, landOwners, balances)
             if isValid:
                 blockData.append(transaction)
-                if transaction.type == Transaction.LD_TRANSACTION:
+                if transaction.type == Transaction.RC_TRANSACTION:
+                    balances[transaction.input["user_id"]] = transaction.input["amount"]
+                elif transaction.type == Transaction.LD_TRANSACTION:
                     landOwners[transaction.input["land_id"]] = transaction.input["user_id"]
                 elif transaction.type == Transaction.LT_TRANSACTION:
                     landOwners[transaction.input["land_id"]] = transaction.output["user_id"]
+                elif transaction.type == Transaction.ST_TRANSACTION:
+                    balances[transaction.input["user_id"]] -= transaction.input["amount"]
         
         if len(blockData) == 0:
             Log.info("All transactions are invalid. No new block is minted", "MINTING", self.id)
@@ -86,8 +92,10 @@ class Node:
         print(block)
         return block
 
-    def validate(self, transaction: Transaction, landOwners: dict) -> bool:
-        if transaction.type == Transaction.LD_TRANSACTION:
+    def validate(self, transaction: Transaction, landOwners: dict[str, str], balances: dict[str, int]) -> bool:
+        if transaction.type == Transaction.RC_TRANSACTION:
+            pass
+        elif transaction.type == Transaction.LD_TRANSACTION:
             if transaction.input["land_id"] in landOwners:
                 Log.info(
                     f"{{ {repr(transaction)} }} is {colored('invalid', 'red', attrs=['bold'])} as land is already registered",
@@ -104,11 +112,30 @@ class Node:
                 )
                 return False
         elif transaction.type == Transaction.ST_TRANSACTION:
-            Log.info(f"{{ {repr(transaction)} }} is valid", "MINTING", self.id)
+            nodeId = transaction.input["user_id"]
+            if nodeId not in balances:
+                balance = 0
+            else:
+                balance = balances[nodeId]
+            if balance < transaction.input["amount"]:
+                Log.info(
+                    f"{{ {repr(transaction)} }} is {colored('invalid', 'red', attrs=['bold'])} as user does not have sufficient balance",
+                    "MINTING",
+                    self.id
+                )
+                return False
+            elif transaction.input["amount"] <= 0:
+                Log.info(
+                    f"{{ {repr(transaction)} }} is {colored('invalid', 'red', attrs=['bold'])} as stake needs to be a positive amount",
+                    "MINTING",
+                    self.id
+                )
+                return False
         else:
             Log.error(f"{{ {repr(transaction)} }} is of invalid type {transaction.type}")
             return False
         
+        Log.info(f"{{ {repr(transaction)} }} is valid", "MINTING", self.id)
         return True
     
     def addBlock(self, block: Block | None) -> None:
