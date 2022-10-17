@@ -73,7 +73,7 @@ class Network:
                 print()
         Log.info("Stopped the network")
 
-    # run a specified command on the network
+    # Run a specified command on the network
     def run(self, command: str) -> None:
         Log.info(command, "RUN")
         self.handle(command.split(" "))
