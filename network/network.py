@@ -1,4 +1,5 @@
 import pickle
+import time
 from copy import deepcopy
 from termcolor import colored
 from tabulate import tabulate
@@ -66,11 +67,15 @@ class Network:
         while True:
             command = input("\n> ").split(" ")
             if command[0] == Commands.STOP.key:
-                Log.info("Stopping the network...")
+                Log.info("Stopping the network", end="")
+                for _ in range(3):
+                    print(".", end="", flush=True)
+                    time.sleep(1)
                 break
             else:
                 self.handle(command)
                 print()
+        print()
         Log.info("Stopped the network")
 
     # Run a specified command on the network

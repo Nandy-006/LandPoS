@@ -9,11 +9,11 @@ class Command:
 
 class Log:
     @staticmethod
-    def info(message: str, type: str = 'INFO', nodeId: str = "") -> None:
+    def info(message: str, type: str = 'INFO', nodeId: str = "", end="\n") -> None:
         infoMessage = f"{colored(type, 'blue', attrs=['bold'])}: {message}"
         if nodeId != "":
             infoMessage = f"[{colored(nodeId, 'yellow', attrs=['bold'])}] " + infoMessage
-        print(infoMessage)
+        print(infoMessage, end=end)
     
     @staticmethod
     def error(message: str) -> None:
