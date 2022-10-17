@@ -39,7 +39,7 @@ in the network.
 
 # Blockchain and Proof of Stake
 
-A Blockchain is a distributed ledger containing immutable transactions. It is a set of blocks cryptographically linked to each other.
+A Blockchain is a distributed ledger containing immutable transactions. It is a set of blocks cryptographically linked to each other. Each block contains a number of transactions. Each transaction is a transfer of value in the blockchain
 
 This blockchain is used to track ownerships and transfers of lands
 
@@ -57,11 +57,32 @@ The blockchain supports 4 types of transactions
 4. **Stake Increase**
    The transaction used by a user to increase their stake in the network
 
+## Proof of Stake Consensus
+A validator is selected from the set of nodes in the network. This is done by using the coinage of the nodes.
+- `Stake` - The amount of coins staked by a node in the network
+- `Age` - The number of blocks since the last block minted by a node
+- `Coinage` - The product of stake and age
+A node is randomly chosen as a validator (Weighted by their coinages)
+
+The validator node validates the transactions and puts the validated transaction into a block. This is called minting or forging a block. The block is then broadcasted to all nodes who then add it to their respective blockchains.
+
+The structure of a block is given as
+
+**Block Header**
+   - **ID**: The height of the block
+   - **Timestamp**: The timestamp when the block was minted
+   - **Prev. block hash**: The hash of the previous block
+   - **Merkle Root**: The merkle root of the transactions in the block
+   - **Validator**: The ID of the validator of the block
+
+**Block Data**
+   - The list of transactions validated in this block
+
 # Function Definitions
 
 ## Network
 
-This folder holds the code implementation for the representation of the blockchain network.
+This folder holds the code implementation for the representation of the blockchain network. Network is essentially a simulation of a P2P environment.
 
 ### `network.py`
 
