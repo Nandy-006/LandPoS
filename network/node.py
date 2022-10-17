@@ -24,11 +24,7 @@ class Node:
         Log.info(f"{self.id} owns land {landId}", "INITIATE TRANSACTION", self.id)
         return transaction
     
-    def buyLand(self, landId: str) -> Transaction | None:
-        sellerId = self.blockchain.getLandOwner(landId)
-        if sellerId is None:
-            Log.error(f"Land ID {landId} is unknown")
-            return None
+    def buyLand(self, landId: str, sellerId: str) -> Transaction:
         transaction = Transaction.newLTTransaction(sellerId, landId, self.id)
         Log.info(f"{self.id} buys land {landId} from {sellerId}", "INITIATE TRANSACTION", self.id)
         return transaction
@@ -87,7 +83,7 @@ class Node:
             Log.info("All transactions are invalid. No new block is minted", "MINTING", self.id)
             return None
         
-        block = Block.createBlock(self.blockchain.getLastBlock(), self.id, blockData)
+        block = Block.createBlock(self.blockchain.getLength(), self.blockchain.getLastBlock(), self.id, blockData)
         Log.info("Minted new block", "MINTING", self.id)
         print(block)
         return block
@@ -104,6 +100,13 @@ class Node:
                 )
                 return False
         elif transaction.type == Transaction.LT_TRANSACTION:
+            if transaction.input["land_id"] not in landOwners:
+                Log.info(
+                    f"{{ {repr(transaction)} }} is {colored('invalid', 'red', attrs=['bold'])} as land is not registered",
+                    "MINTING",
+                    self.id
+                )
+                return False
             if transaction.input["user_id"] != landOwners[transaction.input["land_id"]]:
                 Log.info(
                     f"{{ {repr(transaction)} }} is {colored('invalid', 'red', attrs=['bold'])} as seller does not own this land",
