@@ -46,6 +46,7 @@ class Node:
     # creates a new transaction and adds it to the transaction pool
     def addTransaction(self, transaction: Transaction, peers: list[str]) -> bool:
         self.transactionPool.append(transaction)
+        Log.info(f"Added {colored(transaction.id, 'yellow')} to pool", nodeId=self.id)
         if len(self.transactionPool) >= BLOCK_TRANSACTION_THRESHOLD:
             validator = self.getValidator(peers)
             if validator == self.id:
@@ -78,6 +79,7 @@ class Node:
         balances = self.blockchain.getAllBalances()
         
         # validates all transactions in the transaction pool
+        Log.info("Validating transactions", "MINTING", self.id)
         for transaction in self.transactionPool:
             isValid = self.validate(transaction, landOwners, balances)
             if isValid:
@@ -89,7 +91,7 @@ class Node:
                 elif transaction.type == Transaction.LD_TRANSACTION:
                     landOwners[transaction.input["land_id"]] = transaction.input["user_id"]
                 elif transaction.type == Transaction.LT_TRANSACTION:
-                    # landOwners[transaction.input["land_id"]] = transaction.output["user_id"]
+                    landOwners[transaction.input["land_id"]] = transaction.output["user_id"]
                     pass
                 elif transaction.type == Transaction.ST_TRANSACTION:
                     balances[transaction.input["user_id"]] -= transaction.input["amount"]
@@ -119,15 +121,15 @@ class Node:
                 return False
         # checks if the land is declared and that the seller owns said land
         elif transaction.type == Transaction.LT_TRANSACTION:
-            landOwners = self.blockchain.getLandOwners()
-            if transaction.input["land_id"] not in landOwners:
+            trueLandOwners = self.blockchain.getLandOwners()
+            if transaction.input["land_id"] not in trueLandOwners:
                 Log.info(
                     f"{{ {repr(transaction)} }} is {colored('invalid', 'red', attrs=['bold'])} as land is not registered",
                     "MINTING",
                     self.id
                 )
                 return False
-            if transaction.input["user_id"] != landOwners[transaction.input["land_id"]]:
+            if not transaction.input["user_id"] == trueLandOwners[transaction.input["land_id"]] == landOwners[transaction.input["land_id"]]:
                 Log.info(
                     f"{{ {repr(transaction)} }} is {colored('invalid', 'red', attrs=['bold'])} as seller does not own this land",
                     "MINTING",
@@ -135,12 +137,19 @@ class Node:
                 )
                 return False
         # checks if the user has enough coins in their wallet to insrease stake
+            if transaction.input["user_id"] == transaction.output["user_id"]:
+                Log.info(
+                    f"{{ {repr(transaction)} }} is {colored('invalid', 'red', attrs=['bold'])} as buyer and seller cannot be the same",
+                    "MINTING",
+                    self.id
+                )
+                return False
         elif transaction.type == Transaction.ST_TRANSACTION:
             nodeId = transaction.input["user_id"]
             if nodeId not in balances:
                 balance = 0
             else:
-                balance = self.blockchain.getBalance(nodeId)
+                balance = balances[nodeId]
             if balance < transaction.input["amount"]:
                 Log.info(
                     f"{{ {repr(transaction)} }} is {colored('invalid', 'red', attrs=['bold'])} as user does not have sufficient balance",
@@ -170,4 +179,4 @@ class Node:
             return
         
         self.blockchain.addBlock(block)
-        Log.info("Added minted block to blockchain", nodeId = self.id)
+        Log.info(f"Added block {self.id} to blockchain", nodeId = self.id)

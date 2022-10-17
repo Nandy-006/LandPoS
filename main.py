@@ -11,10 +11,10 @@ if __name__ == "__main__":
             with open(sys.argv[1], "rb") as f:
                 network = pickle.load(f)
             Log.info(f"Successfully loaded network from file {sys.argv[1]}")
+            network.start()
         except:
             Log.error(f"Invalid file {sys.argv[1]}")
     # if there is no file with the blockchain then a new blockchain is created
     else:
         network = Network()
-
-    network.start()
+        network.start()
