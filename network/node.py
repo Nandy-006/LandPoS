@@ -41,6 +41,7 @@ class Node:
     
     def addTransaction(self, transaction: Transaction, peers: list[str]) -> bool:
         self.transactionPool.append(transaction)
+        Log.info(f"Added {colored(transaction.id, 'yellow')} to pool", nodeId=self.id)
         if len(self.transactionPool) >= BLOCK_TRANSACTION_THRESHOLD:
             validator = self.getValidator(peers)
             if validator == self.id:
@@ -66,6 +67,7 @@ class Node:
         blockData: list[Transaction] = []
         landOwners = self.blockchain.getLandOwners()
         balances = self.blockchain.getAllBalances()
+        Log.info("Validating transactions", "MINTING", self.id)
         for transaction in self.transactionPool:
             isValid = self.validate(transaction, landOwners, balances)
             if isValid:
@@ -117,12 +119,19 @@ class Node:
                     self.id
                 )
                 return False
+            if transaction.input["user_id"] == transaction.output["user_id"]:
+                Log.info(
+                    f"{{ {repr(transaction)} }} is {colored('invalid', 'red', attrs=['bold'])} as buyer and seller cannot be the same",
+                    "MINTING",
+                    self.id
+                )
+                return False
         elif transaction.type == Transaction.ST_TRANSACTION:
             nodeId = transaction.input["user_id"]
             if nodeId not in balances:
                 balance = 0
             else:
-                balance = self.blockchain.getBalance(nodeId)
+                balance = balances[nodeId]
             if balance < transaction.input["amount"]:
                 Log.info(
                     f"{{ {repr(transaction)} }} is {colored('invalid', 'red', attrs=['bold'])} as user does not have sufficient balance",
@@ -151,4 +160,4 @@ class Node:
             return
         
         self.blockchain.addBlock(block)
-        Log.info("Added minted block to blockchain", nodeId = self.id)
+        Log.info(f"Added block {self.id} to blockchain", nodeId = self.id)

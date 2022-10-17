@@ -5,6 +5,7 @@ from tabulate import tabulate
 
 from blockchain.block import Block
 from blockchain.blockchain import Blockchain
+from blockchain.constants import BLOCK_TRANSACTION_THRESHOLD
 from blockchain.transaction import Transaction
 from utils.utils import Log, Command
 from network.node import Node
@@ -66,9 +67,11 @@ class Network:
                 break
             else:
                 self.handle(command)
+                print()
         Log.info("Stopped the network")
 
     def run(self, command: str) -> None:
+        Log.info(command, "RUN")
         self.handle(command.split(" "))
     
     def nodeExists(self, nodeId: str | None = None) -> bool:
@@ -227,16 +230,21 @@ class Network:
             ], tablefmt="simple"))
     
     def broadcastTransaction(self, transaction: Transaction) -> None:
+        Log.info(f"Broadcasting transaction {colored(transaction.id, 'yellow')} to all nodes")
         validator = None
         for node in self.nodes.values():
             isMinting = node.addTransaction(transaction, list(self.nodes.keys()))
             if isMinting:
                 validator = node
         if validator is not None:
+            print()
+            Log.info(f"Block Transaction Threshold of {BLOCK_TRANSACTION_THRESHOLD} reached. Proceeding to mint new block")
+            Log.info(f"{validator.id} is chosen as the validator", "MINTING")
             block = validator.mint()
             self.broadcastBlock(block)
     
     def broadcastBlock(self, block: Block | None) -> None:
-        Log.info("Broadcasting minted block to all nodes")
+        if block is not None:
+            Log.info(f"Broadcasting minted block {block.id} to all nodes")
         for node in self.nodes.values():
             node.addBlock(block)

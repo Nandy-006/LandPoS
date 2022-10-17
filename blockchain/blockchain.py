@@ -108,6 +108,6 @@ class Blockchain:
         return balances
 
     def __str__(self) -> str:
-        return "\n".join([colored("THE BLOCKCHAIN", "green", attrs=["bold"])] + [
+        return "\n".join([colored(f"THE BLOCKCHAIN [{self.getLength()}]", "green", attrs=["bold"])] + [
             str(block) for block in self.chain
         ])
