@@ -71,6 +71,7 @@ class Network:
         Log.info("Stopped the network")
 
     def run(self, command: str) -> None:
+        print()
         Log.info(command, "RUN")
         self.handle(command.split(" "))
     
