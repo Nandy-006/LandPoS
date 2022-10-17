@@ -4,11 +4,11 @@ A land management system using Proof of Stake consensus based blockchain
 
 # Group 14
 
-`2019A7PS0164H` - Nandan H R
-
-`2019A7PS0033H` - T V Chandra Vamsi
-
-`2019A7PS0158H` - Vraj Ketan Gandhi
+| ID              | Name              |
+|-----------------|-------------------|
+| `2019A7PS0164H` | Nandan H R        |
+| `2019A7PS0033H` | T V Chandra Vamsi |
+| `2019A7PS0158H` | Vraj Ketan Gandhi |
 
 # Running the blockchain network
 
