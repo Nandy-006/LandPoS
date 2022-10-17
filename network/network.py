@@ -13,7 +13,7 @@ class Commands:
 
     # Node specific
     REGISTER = Command("register", "<node_id> register <land_id>", "Register new land under node")
-    BUY = Command("buy", "<node_id> buy <land_id>", "Buy specified land")
+    BUY = Command("buy", "<node_id> buy <land_id> <seller_id>", "Buy specified land")
     SELL = Command("sell", "<node_id> sell <land_id> <receiver_id>", "Sell specified land")
     STAKE = Command("stake", "<node_id> stake <amount>", "Stake specified amount")
     BALANCE = Command("balance", "<node_id> balance", "Get node's current balance")
@@ -89,11 +89,10 @@ class Network:
                 if self.nodeExists(nodeId):
                     transaction = self.nodes[nodeId].registerLand(landId)
                     self.broadcastTransaction(transaction)
-            case [nodeId, "buy", landId]:
-                if self.nodeExists(nodeId):
-                    transaction = self.nodes[nodeId].buyLand(landId)
-                    if transaction is not None:
-                        self.broadcastTransaction(transaction)
+            case [nodeId, "buy", landId, sellerId]:
+                if self.nodeExists(nodeId) and self.nodeExists(sellerId):
+                    transaction = self.nodes[nodeId].buyLand(landId, sellerId)
+                    self.broadcastTransaction(transaction)
             case [nodeId, "sell", landId, receiverId]:
                 if self.nodeExists(nodeId) and self.nodeExists(receiverId):
                     transaction = self.nodes[nodeId].sellLand(receiverId, landId)

@@ -10,13 +10,15 @@ from blockchain.constants import GENESIS_BLOCK_MERKLE_ROOT, GENESIS_BLOCK_VALIDA
 
 class Block:
     def __init__(
-        self, 
-        timestamp: datetime, 
-        previousBlockHash: str, 
-        merkleRoot: str, 
-        validator: str, 
+        self,
+        id: int,
+        timestamp: datetime,
+        previousBlockHash: str,
+        merkleRoot: str,
+        validator: str,
         data: list[Transaction]
     ) -> None:
+        self.id = id
         self.timestamp = timestamp
         self.previousBlockHash = previousBlockHash
         self.merkleRoot = merkleRoot
@@ -31,6 +33,7 @@ class Block:
     def genesis() -> 'Block':
         timestamp = datetime.now()
         return Block(
+            0,
             timestamp, 
             GENESIS_BLOCK_PREVIOUS_BLOCK_HASH, 
             GENESIS_BLOCK_MERKLE_ROOT, 
@@ -39,11 +42,11 @@ class Block:
         )
 
     @staticmethod
-    def createBlock(lastBlock: 'Block', validator: str, data: list[Transaction]) -> 'Block':
+    def createBlock(id: int, lastBlock: 'Block', validator: str, data: list[Transaction]) -> 'Block':
         timestamp = datetime.now()
         previousBlockHash = Block.hashBlock(lastBlock)
         merkleRoot = MerkleTree.getMerkleRoot(data)
-        return Block(timestamp, previousBlockHash, merkleRoot, validator, data)
+        return Block(id, timestamp, previousBlockHash, merkleRoot, validator, data)
     
     @staticmethod
     def serialize(block: 'Block') -> bytes:
@@ -52,6 +55,7 @@ class Block:
     def __str__(self) -> str:
         return tabulate([
             [colored("BLOCK HEADER", "green", attrs=["bold"]), "", ""],
+            [colored("ID", attrs=["bold"]), self.id, ""],
             [colored("Timestamp", attrs=["bold"]), self.timestamp, ""],
             [colored("Prev. Block Hash", attrs=["bold"]), self.previousBlockHash, ""],
             [colored("Merkle Root", attrs=["bold"]), self.merkleRoot, ""],
