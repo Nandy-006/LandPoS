@@ -10,9 +10,8 @@ from blockchain.transaction import Transaction
 from utils.utils import Log, Command
 from network.node import Node
 
+# All commands that the user can execute at the terminal
 class Commands:
-
-    # all commands that the user can execute at the terminal
     # Node specific
     REGISTER = Command("register", "<node_id> register <land_id>", "Register new land under node")
     BUY = Command("buy", "<node_id> buy <land_id>", "Buy specified land")
@@ -36,35 +35,32 @@ class Commands:
     HELP = Command("help", "help", "List all commands")
     STOP = Command("stop", "stop", "Stop the network")
 
+# Network represents a blockchain network. It manages all communications between nodes.
 class Network:
-    # file where the blockchain gets saved
     DEFAULT_NETWORK_FILE = "blockchain.net"
 
     def __init__(self) -> None:
         self.nodes: dict[str, Node] = {}
     
-    # registers a new member to the blockchain with a balance
+    # Connects a new node to the network
     def connectNode(self, id: str, balance: int) -> None:
         Log.info(f"Node {id} is trying to join the network", "NEW NODE")
-        # check if the node has already joined
         if id in self.nodes:
             Log.error("Node already exists")
             return None
 
-        # create new node
         if len(self.nodes) == 0:
             newNode = Node(id, Blockchain(), [])
         else:
             existingNode = list(self.nodes.values())[0]
             newNode = Node(id, deepcopy(existingNode.blockchain), deepcopy(existingNode.transactionPool))
         self.nodes[id] = newNode
-        
-        # create new transaction of new node joining the blockchain
+
         transaction = newNode.registerCoins(balance)
         self.broadcastTransaction(transaction)
         Log.info(f"Node {id} has joined the network", "NEW NODE")
     
-    # starts the blockchain network
+    # Start the blockchain network and listen to user inputs
     def start(self) -> None:
         Log.info("Starting the network")
         while True:
@@ -77,11 +73,12 @@ class Network:
                 print()
         Log.info("Stopped the network")
 
+    # run a specified command on the network
     def run(self, command: str) -> None:
         Log.info(command, "RUN")
         self.handle(command.split(" "))
     
-    # check if node already exists
+    # A helper function to check if a given node (or at least one node) exists on the network
     def nodeExists(self, nodeId: str | None = None) -> bool:
         if nodeId is None:
             if len(self.nodes) <= 0:
@@ -94,7 +91,7 @@ class Network:
             return False
         return True
 
-    # handles all cases of the user commands input in the terminal
+    # Handle user commands
     def handle(self, command: list[str]) -> None:
         match command:
             case [nodeId, "register", landId]:
@@ -228,7 +225,7 @@ class Network:
             case _:
                 print(f"Invalid command (use {colored(Commands.HELP.key, attrs=['bold'])} to list all commands)")
     
-    # prints all available commands
+    # Displays all available commands
     def printCommands(self) -> None:
         commands = []
         for _, command in vars(Commands).items():
@@ -240,7 +237,7 @@ class Network:
             colored("Description", attrs=['bold'])
             ], tablefmt="simple"))
     
-    # broadcasts the transaction and mints a new block if the transaction pool is full
+    # Broadcast new transaction to all nodes so that they can add it to their transaction pools
     def broadcastTransaction(self, transaction: Transaction) -> None:
         Log.info(f"Broadcasting transaction {colored(transaction.id, 'yellow')} to all nodes")
         validator = None
@@ -248,13 +245,16 @@ class Network:
             isMinting = node.addTransaction(transaction, list(self.nodes.keys()))
             if isMinting:
                 validator = node
+        
+        # If the block transaction threshold has been reached, tell the validator to mint a new block
         if validator is not None:
             print()
             Log.info(f"Block Transaction Threshold of {BLOCK_TRANSACTION_THRESHOLD} reached. Proceeding to mint new block")
             Log.info(f"{validator.id} is chosen as the validator", "MINTING")
             block = validator.mint()
             self.broadcastBlock(block)
-    # broadcasts a new block and appends it to the blockchain when a new block is minted
+    
+    # Broadcasts the new minted block to all nodes so that they can add it to their blockchains
     def broadcastBlock(self, block: Block | None) -> None:
         if block is not None:
             Log.info(f"Broadcasting minted block {block.id} to all nodes")
