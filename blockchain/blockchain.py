@@ -4,6 +4,8 @@ from blockchain.block import Block
 from blockchain.transaction import Transaction
 from utils.utils import Log
 
+# The Blockchain class is used to represent a blockchain which is a series of cryptographically linked blocks
+# The Blockchain is the single source of truth for all data in a distributed network
 class Blockchain:
     def __init__(self) -> None:
         self.chain = [Block.genesis()]

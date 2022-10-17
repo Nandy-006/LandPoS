@@ -1,6 +1,8 @@
 from hashlib import sha256
 from blockchain.transaction import Transaction
 
+# A MerkleTree is a tree in which every leaf node is a hash of a data block and every inner node is the hash of its child nodes
+# This class provides a function to get the Merkler Root given a list of transactions
 class MerkleTree:
     @staticmethod
     def getMerkleRoot(transactionList: list[Transaction]) -> str:
