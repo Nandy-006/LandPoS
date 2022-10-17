@@ -29,7 +29,7 @@ class Commands:
     NODES = Command("nodes", "nodes", "Get all registered nodes")
 
     # Network
-    CONNECT = Command("connect", "connect <node_id>", "Connect new node to the network")
+    CONNECT = Command("connect", "connect <node_id> <balance>", "Connect new node to the network")
     SAVE = Command("save", "save [<filename>]", "Save the network into a file")
     HELP = Command("help", "help", "List all commands")
     STOP = Command("stop", "stop", "Stop the network")
@@ -197,9 +197,9 @@ class Network:
                     if balance <= 0:
                         Log.error("Balance needs to be positive")
                         return
+                    self.connectNode(nodeId, balance)
                 except:
                     Log.error("Balance needs to be an integer")
-                self.connectNode(nodeId, balance)
             case ["save"]:
                 with open(Network.DEFAULT_NETWORK_FILE, "wb") as f:
                     pickle.dump(self, f)

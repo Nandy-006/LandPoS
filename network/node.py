@@ -71,11 +71,13 @@ class Node:
             if isValid:
                 blockData.append(transaction)
                 if transaction.type == Transaction.RC_TRANSACTION:
-                    balances[transaction.input["user_id"]] = transaction.input["amount"]
+                    # balances[transaction.input["user_id"]] = transaction.input["amount"]
+                    pass
                 elif transaction.type == Transaction.LD_TRANSACTION:
                     landOwners[transaction.input["land_id"]] = transaction.input["user_id"]
                 elif transaction.type == Transaction.LT_TRANSACTION:
-                    landOwners[transaction.input["land_id"]] = transaction.output["user_id"]
+                    # landOwners[transaction.input["land_id"]] = transaction.output["user_id"]
+                    pass
                 elif transaction.type == Transaction.ST_TRANSACTION:
                     balances[transaction.input["user_id"]] -= transaction.input["amount"]
         
@@ -100,6 +102,7 @@ class Node:
                 )
                 return False
         elif transaction.type == Transaction.LT_TRANSACTION:
+            landOwners = self.blockchain.getLandOwners()
             if transaction.input["land_id"] not in landOwners:
                 Log.info(
                     f"{{ {repr(transaction)} }} is {colored('invalid', 'red', attrs=['bold'])} as land is not registered",
@@ -119,7 +122,7 @@ class Node:
             if nodeId not in balances:
                 balance = 0
             else:
-                balance = balances[nodeId]
+                balance = self.blockchain.getBalance(nodeId)
             if balance < transaction.input["amount"]:
                 Log.info(
                     f"{{ {repr(transaction)} }} is {colored('invalid', 'red', attrs=['bold'])} as user does not have sufficient balance",
