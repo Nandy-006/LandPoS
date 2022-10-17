@@ -78,7 +78,7 @@ class Node:
                 elif transaction.type == Transaction.LD_TRANSACTION:
                     landOwners[transaction.input["land_id"]] = transaction.input["user_id"]
                 elif transaction.type == Transaction.LT_TRANSACTION:
-                    # landOwners[transaction.input["land_id"]] = transaction.output["user_id"]
+                    landOwners[transaction.input["land_id"]] = transaction.output["user_id"]
                     pass
                 elif transaction.type == Transaction.ST_TRANSACTION:
                     balances[transaction.input["user_id"]] -= transaction.input["amount"]
@@ -104,15 +104,15 @@ class Node:
                 )
                 return False
         elif transaction.type == Transaction.LT_TRANSACTION:
-            landOwners = self.blockchain.getLandOwners()
-            if transaction.input["land_id"] not in landOwners:
+            trueLandOwners = self.blockchain.getLandOwners()
+            if transaction.input["land_id"] not in trueLandOwners:
                 Log.info(
                     f"{{ {repr(transaction)} }} is {colored('invalid', 'red', attrs=['bold'])} as land is not registered",
                     "MINTING",
                     self.id
                 )
                 return False
-            if transaction.input["user_id"] != landOwners[transaction.input["land_id"]]:
+            if not transaction.input["user_id"] == trueLandOwners[transaction.input["land_id"]] == landOwners[transaction.input["land_id"]]:
                 Log.info(
                     f"{{ {repr(transaction)} }} is {colored('invalid', 'red', attrs=['bold'])} as seller does not own this land",
                     "MINTING",
