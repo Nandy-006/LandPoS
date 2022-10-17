@@ -98,7 +98,7 @@ class Node:
         elif transaction.type == Transaction.LD_TRANSACTION:
             if transaction.input["land_id"] in landOwners:
                 Log.info(
-                    f"{{ {repr(transaction)} }} is {colored('invalid', 'red', attrs=['bold'])} as land is already registered",
+                    f"Transaction {colored(transaction.id, 'yellow')}: {str(transaction)} is {colored('invalid', 'red', attrs=['bold'])} as land is already registered",
                     "MINTING",
                     self.id
                 )
@@ -107,21 +107,21 @@ class Node:
             trueLandOwners = self.blockchain.getLandOwners()
             if transaction.input["land_id"] not in trueLandOwners:
                 Log.info(
-                    f"{{ {repr(transaction)} }} is {colored('invalid', 'red', attrs=['bold'])} as land is not registered",
+                    f"Transaction {colored(transaction.id, 'yellow')}: {str(transaction)} is {colored('invalid', 'red', attrs=['bold'])} as land is not registered",
                     "MINTING",
                     self.id
                 )
                 return False
             if not transaction.input["user_id"] == trueLandOwners[transaction.input["land_id"]] == landOwners[transaction.input["land_id"]]:
                 Log.info(
-                    f"{{ {repr(transaction)} }} is {colored('invalid', 'red', attrs=['bold'])} as seller does not own this land",
+                    f"Transaction {colored(transaction.id, 'yellow')}: {str(transaction)} is {colored('invalid', 'red', attrs=['bold'])} as seller does not own this land",
                     "MINTING",
                     self.id
                 )
                 return False
             if transaction.input["user_id"] == transaction.output["user_id"]:
                 Log.info(
-                    f"{{ {repr(transaction)} }} is {colored('invalid', 'red', attrs=['bold'])} as buyer and seller cannot be the same",
+                    f"Transaction {colored(transaction.id, 'yellow')}: {str(transaction)} is {colored('invalid', 'red', attrs=['bold'])} as buyer and seller cannot be the same",
                     "MINTING",
                     self.id
                 )
@@ -134,23 +134,23 @@ class Node:
                 balance = balances[nodeId]
             if balance < transaction.input["amount"]:
                 Log.info(
-                    f"{{ {repr(transaction)} }} is {colored('invalid', 'red', attrs=['bold'])} as user does not have sufficient balance",
+                    f"Transaction {colored(transaction.id, 'yellow')}: {str(transaction)} is {colored('invalid', 'red', attrs=['bold'])} as user does not have sufficient balance",
                     "MINTING",
                     self.id
                 )
                 return False
             elif transaction.input["amount"] <= 0:
                 Log.info(
-                    f"{{ {repr(transaction)} }} is {colored('invalid', 'red', attrs=['bold'])} as stake needs to be a positive amount",
+                    f"Transaction {colored(transaction.id, 'yellow')}: {str(transaction)} is {colored('invalid', 'red', attrs=['bold'])} as stake needs to be a positive amount",
                     "MINTING",
                     self.id
                 )
                 return False
         else:
-            Log.error(f"{{ {repr(transaction)} }} is of invalid type {transaction.type}")
+            Log.error(f"Transaction {colored(transaction.id, 'yellow')}: {str(transaction)} is of invalid type {transaction.type}")
             return False
         
-        Log.info(f"{{ {repr(transaction)} }} is valid", "MINTING", self.id)
+        Log.info(f"Transaction {colored(transaction.id, 'yellow')}: {str(transaction)} is {colored('valid', 'green')}", "MINTING", self.id)
         return True
     
     def addBlock(self, block: Block | None) -> None:
