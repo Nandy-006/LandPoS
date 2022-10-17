@@ -41,6 +41,7 @@ class Transaction:
         self.input: InputType = {"user_id": "", "land_id": "", "amount": 0}
         self.output: OutputType = {"user_id": ""}
 
+    # Create new receive coins transaction
     @staticmethod
     def newRCTransaction(receiver_id: str, amount: int) -> 'Transaction':
         input: InputType = {
@@ -53,6 +54,7 @@ class Transaction:
         }
         return Transaction.generateTransaction(Transaction.RC_TRANSACTION, input, output)
 
+    # Create new land declaration transaction
     @staticmethod
     def newLDTransaction(sender_id: str, land_id: str) -> 'Transaction':
         input: InputType = {
@@ -65,6 +67,7 @@ class Transaction:
         }
         return Transaction.generateTransaction(Transaction.LD_TRANSACTION, input, output)
 
+    # Create new land transfer transaction
     @staticmethod
     def newLTTransaction(sender_id: str, land_id: str, receiver_id: str) -> 'Transaction':
         input: InputType = {
@@ -77,6 +80,7 @@ class Transaction:
         }
         return Transaction.generateTransaction(Transaction.LT_TRANSACTION, input, output)
 
+    # Create new stake increase transaction
     @staticmethod
     def newSTTransaction(sender_id: str, amount: int):
         input: InputType = {
