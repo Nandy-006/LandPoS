@@ -11,9 +11,10 @@ from network.node import Node
 
 class Commands:
 
+    # all commands that the user can execute at the terminal
     # Node specific
     REGISTER = Command("register", "<node_id> register <land_id>", "Register new land under node")
-    BUY = Command("buy", "<node_id> buy <land_id> <seller_id>", "Buy specified land")
+    BUY = Command("buy", "<node_id> buy <land_id>", "Buy specified land")
     SELL = Command("sell", "<node_id> sell <land_id> <receiver_id>", "Sell specified land")
     STAKE = Command("stake", "<node_id> stake <amount>", "Stake specified amount")
     BALANCE = Command("balance", "<node_id> balance", "Get node's current balance")
@@ -29,34 +30,40 @@ class Commands:
     NODES = Command("nodes", "nodes", "Get all registered nodes")
 
     # Network
-    CONNECT = Command("connect", "connect <node_id> <balance>", "Connect new node to the network")
+    CONNECT = Command("connect", "connect <node_id>", "Connect new node to the network")
     SAVE = Command("save", "save [<filename>]", "Save the network into a file")
     HELP = Command("help", "help", "List all commands")
     STOP = Command("stop", "stop", "Stop the network")
 
 class Network:
-
+    # file where the blockchain gets saved
     DEFAULT_NETWORK_FILE = "blockchain.net"
 
     def __init__(self) -> None:
         self.nodes: dict[str, Node] = {}
     
+    # registers a new member to the blockchain with a balance
     def connectNode(self, id: str, balance: int) -> None:
         Log.info(f"Node {id} is trying to join the network", "NEW NODE")
+        # check if the node has already joined
         if id in self.nodes:
             Log.error("Node already exists")
             return None
 
+        # create new node
         if len(self.nodes) == 0:
             newNode = Node(id, Blockchain(), [])
         else:
             existingNode = list(self.nodes.values())[0]
             newNode = Node(id, deepcopy(existingNode.blockchain), deepcopy(existingNode.transactionPool))
         self.nodes[id] = newNode
+        
+        # create new transaction of new node joining the blockchain
         transaction = newNode.registerCoins(balance)
         self.broadcastTransaction(transaction)
         Log.info(f"Node {id} has joined the network", "NEW NODE")
     
+    # starts the blockchain network
     def start(self) -> None:
         Log.info("Starting the network")
         while True:
@@ -71,6 +78,7 @@ class Network:
     def run(self, command: str) -> None:
         self.handle(command.split(" "))
     
+    # check if node already exists
     def nodeExists(self, nodeId: str | None = None) -> bool:
         if nodeId is None:
             if len(self.nodes) <= 0:
@@ -83,16 +91,18 @@ class Network:
             return False
         return True
 
+    # handles all cases of the user commands input in the terminal
     def handle(self, command: list[str]) -> None:
         match command:
             case [nodeId, "register", landId]:
                 if self.nodeExists(nodeId):
                     transaction = self.nodes[nodeId].registerLand(landId)
                     self.broadcastTransaction(transaction)
-            case [nodeId, "buy", landId, sellerId]:
-                if self.nodeExists(nodeId) and self.nodeExists(sellerId):
-                    transaction = self.nodes[nodeId].buyLand(landId, sellerId)
-                    self.broadcastTransaction(transaction)
+            case [nodeId, "buy", landId]:
+                if self.nodeExists(nodeId):
+                    transaction = self.nodes[nodeId].buyLand(landId)
+                    if transaction is not None:
+                        self.broadcastTransaction(transaction)
             case [nodeId, "sell", landId, receiverId]:
                 if self.nodeExists(nodeId) and self.nodeExists(receiverId):
                     transaction = self.nodes[nodeId].sellLand(receiverId, landId)
@@ -197,9 +207,9 @@ class Network:
                     if balance <= 0:
                         Log.error("Balance needs to be positive")
                         return
-                    self.connectNode(nodeId, balance)
                 except:
                     Log.error("Balance needs to be an integer")
+                self.connectNode(nodeId, balance)
             case ["save"]:
                 with open(Network.DEFAULT_NETWORK_FILE, "wb") as f:
                     pickle.dump(self, f)
@@ -215,6 +225,7 @@ class Network:
             case _:
                 print(f"Invalid command (use {colored(Commands.HELP.key, attrs=['bold'])} to list all commands)")
     
+    # prints all available commands
     def printCommands(self) -> None:
         commands = []
         for _, command in vars(Commands).items():
@@ -226,6 +237,7 @@ class Network:
             colored("Description", attrs=['bold'])
             ], tablefmt="simple"))
     
+    # broadcasts the transaction and mints a new block if the transaction pool is full
     def broadcastTransaction(self, transaction: Transaction) -> None:
         validator = None
         for node in self.nodes.values():
@@ -235,7 +247,7 @@ class Network:
         if validator is not None:
             block = validator.mint()
             self.broadcastBlock(block)
-    
+    # broadcasts a new block and appends it to the blockchain when a new block is minted
     def broadcastBlock(self, block: Block | None) -> None:
         Log.info("Broadcasting minted block to all nodes")
         for node in self.nodes.values():
