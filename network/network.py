@@ -29,7 +29,7 @@ class Commands:
     NODES = Command("nodes", "nodes", "Get all registered nodes")
 
     # Network
-    CONNECT = Command("connect", "connect <node_id>", "Connect new node to the network")
+    CONNECT = Command("connect", "connect <node_id> <balance>", "Connect new node to the network")
     SAVE = Command("save", "save [<filename>]", "Save the network into a file")
     HELP = Command("help", "help", "List all commands")
     STOP = Command("stop", "stop", "Stop the network")
