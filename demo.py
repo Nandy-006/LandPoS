@@ -28,8 +28,6 @@ if __name__ == "__main__":
     network.run('alice buy land-2 bob')
     network.run('alice sell land-1 bob')
 
-    # View transactions in pool
-    network.run('pool')
 
     # New node joins the network
     network.run('connect charlie 150')
@@ -40,8 +38,13 @@ if __name__ == "__main__":
     # Node tries to register a land that someone already owns
     network.run('charlie register land-1')
 
-    # Node stakes when their balance is 0
+    # View transactions in pool
+    network.run('pool')
+
     # Balance for charlie is not 150 because the transaction is not in the chain yet
+    network.run('charlie balance')
+
+    # Node stakes when their balance is 0
     network.run('charlie stake 100')
 
     # Two more blocks have been minted, display balances, stakes and lands
@@ -52,7 +55,7 @@ if __name__ == "__main__":
     network.run('lands')
 
     # Node stakes more than their balance
-    network.run('charlie 200')
+    network.run('charlie stake 200')
     
     # Node who doesn't own the land tries to sell it
     network.run('alice sell land-1 charlie')
